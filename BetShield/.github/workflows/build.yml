@@ -17,27 +17,15 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: Find and Run Gradlew
-      run: |
-        GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
-        if [ -z "$GRADLEW_PATH" ]; then
-          echo "ERROR: gradlew file not found anywhere in the repository!"
-          echo "Please ensure you uploaded the full Android project files."
-          exit 1
-        fi
-        PROJECT_DIR=$(dirname "$GRADLEW_PATH")
-        echo "Found gradlew in: $PROJECT_DIR"
-        chmod +x "$GRADLEW_PATH"
-        
-        echo "::group::Building APK"
-        cd "$PROJECT_DIR" && ./gradlew assembleDebug
-        echo "::endgroup::"
-        
-        echo "::group::Building AAB"
-        cd "$PROJECT_DIR" && ./gradlew bundleRelease || echo "AAB Build failed, moving on..."
-        echo "::endgroup::"
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Build APK (Debug)
+      run: gradle assembleDebug
+
+    - name: Build AAB (Release)
+      run: gradle bundleRelease || echo "AAB Build skipped/failed, keeping APK"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
